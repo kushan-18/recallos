@@ -11,8 +11,20 @@ import { notFound, errorHandler } from './middleware/errorHandler.js';
 const app = express();
 
 // --- Global middleware (run for every request) -----------------------------
-// cors: lets the frontend (on a different port) talk to this API.
-app.use(cors({ origin: env.corsOrigin }));
+// cors: lets the frontend (on a different port or domain) talk to this API.
+// CORS_ORIGIN accepts a comma-separated list, e.g.:
+//   CORS_ORIGIN=http://localhost:5173,https://your-site.netlify.app
+const allowedOrigins = env.corsOrigins;
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow requests with no origin (curl, server-to-server, health checks)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(null, false); // browser blocks it; no CORS headers sent
+    },
+  }),
+);
 // express.json: automatically reads JSON bodies sent by the frontend.
 app.use(express.json());
 

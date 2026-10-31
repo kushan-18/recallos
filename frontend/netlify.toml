@@ -1,0 +1,13 @@
+# Netlify build configuration for the AI Customer Support frontend.
+# Base directory: set to "recallos/frontend" in the Netlify dashboard,
+# or place this file at the repo root and set base to "recallos/frontend".
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA fallback: serve index.html for all routes (React Router).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

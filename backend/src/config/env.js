@@ -12,6 +12,13 @@ const env = {
   port: Number(process.env.PORT) || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  // Comma-separated list of allowed origins (set via CORS_ORIGIN env var).
+  // In production, include the Netlify URL, e.g.:
+  //   CORS_ORIGIN=http://localhost:5173,https://your-site.netlify.app
+  corsOrigins: (process.env.CORS_ORIGIN || 'http://localhost:5173')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
 
   // --- AI (Gemini) ---
   geminiApiKey: process.env.GEMINI_API_KEY || null,

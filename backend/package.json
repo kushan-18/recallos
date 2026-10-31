@@ -15,7 +15,8 @@
     "test:chat": "node src/data/test-chat.js",
     "test:failover": "node src/data/test-failover.js",
     "test:endpoints": "node src/data/test-endpoints.js",
-    "test:employee": "node src/data/test-employee.js"
+    "test:employee": "node src/data/test-employee.js",
+    "demo:reset": "npm run seed && npm run embed"
   },
   "license": "MIT",
   "dependencies": {
