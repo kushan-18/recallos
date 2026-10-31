@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { employeeApi } from '../../api/client.js';
 import EmployeeNav from '../../components/layout/EmployeeNav.jsx';
+import ErrorBanner from '../../components/ErrorBanner.jsx';
 
 /**
  * /employee/customers — every customer with their stats.
@@ -12,20 +13,22 @@ export default function EmployeeCustomersPage() {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    employeeApi
-      .customers()
-      .then((d) => {
-        if (cancelled) return;
-        setCustomers(d.customers);
-        setStatus('success');
-      })
-      .catch((err) => !cancelled && (setError(err.message), setStatus('error')));
-    return () => {
-      cancelled = true;
-    };
+  const load = useCallback(async () => {
+    setStatus('loading');
+    setError(null);
+    try {
+      const d = await employeeApi.customers();
+      setCustomers(d.customers || []);
+      setStatus('success');
+    } catch (err) {
+      setError(err.message);
+      setStatus('error');
+    }
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <div>
@@ -41,9 +44,7 @@ export default function EmployeeCustomersPage() {
       {status === 'loading' && <p className="text-sm text-slate-500">Loading customers…</p>}
 
       {status === 'error' && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          {error}. Is the backend running?
-        </div>
+        <ErrorBanner error={`${error}. Is the backend running?`} onRetry={load} />
       )}
 
       <ul className="grid gap-3 sm:grid-cols-2">

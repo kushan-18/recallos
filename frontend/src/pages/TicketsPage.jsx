@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { customersApi, ticketsApi } from '../api/client.js';
 import CustomerNav from '../components/layout/CustomerNav.jsx';
+import ErrorBanner from '../components/ErrorBanner.jsx';
 
 /**
  * The customer's support tickets, split into "Open" and "Resolved".
@@ -44,21 +45,22 @@ export default function TicketsPage() {
     };
   }, [customerId]);
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(async () => {
     setStatus('loading');
-    ticketsApi
-      .list(customerId)
-      .then((data) => {
-        if (cancelled) return;
-        setTickets(data.tickets);
-        setStatus('success');
-      })
-      .catch((err) => !cancelled && (setError(err.message), setStatus('error')));
-    return () => {
-      cancelled = true;
-    };
+    setError(null);
+    try {
+      const data = await ticketsApi.list(customerId);
+      setTickets(data.tickets || []);
+      setStatus('success');
+    } catch (err) {
+      setError(err.message);
+      setStatus('error');
+    }
   }, [customerId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const open = tickets.filter((t) => t.status !== 'resolved');
   const resolved = tickets.filter((t) => t.status === 'resolved');
@@ -128,9 +130,7 @@ export default function TicketsPage() {
       {status === 'loading' && <p className="text-sm text-slate-500">Loading tickets…</p>}
 
       {status === 'error' && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          {error}
-        </div>
+        <ErrorBanner error={error} onRetry={load} />
       )}
 
       {status === 'success' && (

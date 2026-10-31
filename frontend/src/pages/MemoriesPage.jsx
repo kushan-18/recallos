@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { customersApi, memoriesApi } from '../api/client.js';
 import CustomerNav from '../components/layout/CustomerNav.jsx';
+import ErrorBanner from '../components/ErrorBanner.jsx';
 
 /**
  * "What the AI remembers about me" — the transparency page.
@@ -59,8 +60,8 @@ export default function MemoriesPage() {
     setStatus('loading');
     try {
       const data = await memoriesApi.list(customerId);
-      setMemories(data.memories);
-      setRetrieval(data.retrieval);
+      setMemories(data.memories || []);
+      setRetrieval(data.retrieval || null);
       setError(null);
       setStatus('success');
     } catch (err) {
@@ -175,9 +176,7 @@ export default function MemoriesPage() {
       {status === 'loading' && <p className="text-sm text-slate-500">Loading memories…</p>}
 
       {status === 'error' && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          {error}
-        </div>
+        <ErrorBanner error={error} onRetry={load} />
       )}
 
       {status === 'success' && memories.length === 0 && (

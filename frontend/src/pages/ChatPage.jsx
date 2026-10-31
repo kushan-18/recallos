@@ -48,7 +48,7 @@ export default function ChatPage() {
     setLoading((s) => ({ ...s, sidebar: true }));
     try {
       const data = await conversationsApi.list(customerId);
-      setConversations(data.conversations);
+      setConversations(data.conversations || []);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -81,8 +81,8 @@ export default function ChatPage() {
       .messages(customerId, conversationId)
       .then((data) => {
         if (cancelled) return;
-        setActiveConversation(data.conversation);
-        setMessages(data.messages);
+        setActiveConversation(data.conversation || null);
+        setMessages(data.messages || []);
         setError(null);
       })
       .catch((err) => !cancelled && setError(err.message))
@@ -285,10 +285,16 @@ export default function ChatPage() {
               <span>⚠️ {error}</span>
               <button
                 type="button"
-                onClick={() => sendMessage(draft.trim())}
-                disabled={sending || !draft.trim()}
+                onClick={() => {
+                  if (draft.trim()) {
+                    sendMessage(draft.trim());
+                  } else {
+                    loadConversations();
+                  }
+                }}
+                disabled={sending}
                 className="shrink-0 rounded-md border border-red-400/40 px-3 py-1 font-medium text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-                title="Your message is still in the box — send it again"
+                title={draft.trim() ? 'Your message is still in the box — send it again' : 'Reload conversations'}
               >
                 ↻ Retry
               </button>

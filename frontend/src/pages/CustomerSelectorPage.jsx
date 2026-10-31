@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { customersApi } from '../api/client.js';
+import ErrorBanner from '../components/ErrorBanner.jsx';
 
 /**
  * The demo customer picker (the app's home page).
@@ -16,24 +17,23 @@ export default function CustomerSelectorPage() {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    customersApi
-      .list()
-      .then((data) => {
-        if (cancelled) return;
-        setCustomers(data.customers);
-        setStatus('success');
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err.message);
-        setStatus('error');
-      });
-    return () => {
-      cancelled = true;
-    };
+  const load = useCallback(async () => {
+    setStatus('loading');
+    setError(null);
+    try {
+      const data = await customersApi.list();
+      // Default to [] so an unexpected response shape never crashes .map()
+      setCustomers(data.customers || []);
+      setStatus('success');
+    } catch (err) {
+      setError(err.message);
+      setStatus('error');
+    }
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <section className="mx-auto max-w-2xl space-y-8">
@@ -53,10 +53,10 @@ export default function CustomerSelectorPage() {
       )}
 
       {status === 'error' && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          {error}. Is the backend running? Start it with <code>npm run dev</code> inside the
-          backend folder.
-        </div>
+        <ErrorBanner
+          error={`${error}. Is the backend running? Start it with "npm run dev" in the backend folder.`}
+          onRetry={load}
+        />
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">

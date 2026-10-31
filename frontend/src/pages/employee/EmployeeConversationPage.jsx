@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { employeeApi } from '../../api/client.js';
 import EmployeeNav, { StatusChip } from '../../components/layout/EmployeeNav.jsx';
+import ErrorBanner from '../../components/ErrorBanner.jsx';
 
 function formatDate(value) {
   if (!value) return '';
@@ -49,9 +50,15 @@ export default function EmployeeConversationPage() {
     setStatus('loading');
     try {
       const d = await employeeApi.conversation(conversationId);
-      setData(d);
+      const conversation = d.conversation || {};
+      setData({
+        ...d,
+        conversation,
+        customer: d.customer || {},
+        messages: d.messages || [],
+      });
       // The thread response carries any cached summary — no AI call needed.
-      setSummary(d.conversation.summary ? { summary: d.conversation.summary, summaryAt: d.conversation.summaryAt } : null);
+      setSummary(conversation.summary ? { summary: conversation.summary, summaryAt: conversation.summaryAt } : null);
       setError(null);
       setStatus('success');
     } catch (err) {
@@ -133,9 +140,7 @@ export default function EmployeeConversationPage() {
       {status === 'loading' && <p className="text-sm text-slate-500">Loading conversation…</p>}
 
       {status === 'error' && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          {error}
-        </div>
+        <ErrorBanner error={error} onRetry={load} />
       )}
 
       {status === 'success' && data && (

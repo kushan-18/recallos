@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { employeeApi } from '../../api/client.js';
 import EmployeeNav, { StatusChip } from '../../components/layout/EmployeeNav.jsx';
+import ErrorBanner from '../../components/ErrorBanner.jsx';
 
 function formatDate(value) {
   if (!value) return '';
@@ -25,20 +26,26 @@ export default function EmployeeOverviewPage() {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    employeeApi
-      .overview()
-      .then((d) => {
-        if (cancelled) return;
-        setData(d);
-        setStatus('success');
-      })
-      .catch((err) => !cancelled && (setError(err.message), setStatus('error')));
-    return () => {
-      cancelled = true;
-    };
+  const load = useCallback(async () => {
+    setStatus('loading');
+    setError(null);
+    try {
+      const d = await employeeApi.overview();
+      setData({
+        ...d,
+        counts: d.counts || {},
+        recentConversations: d.recentConversations || [],
+      });
+      setStatus('success');
+    } catch (err) {
+      setError(err.message);
+      setStatus('error');
+    }
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const cards = data
     ? [
@@ -64,9 +71,7 @@ export default function EmployeeOverviewPage() {
       {status === 'loading' && <p className="text-sm text-slate-500">Loading overview…</p>}
 
       {status === 'error' && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          {error}. Is the backend running?
-        </div>
+        <ErrorBanner error={`${error}. Is the backend running?`} onRetry={load} />
       )}
 
       {status === 'success' && (

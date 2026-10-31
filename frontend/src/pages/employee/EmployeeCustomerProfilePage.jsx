@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { employeeApi } from '../../api/client.js';
 import EmployeeNav, { StatusChip } from '../../components/layout/EmployeeNav.jsx';
+import ErrorBanner from '../../components/ErrorBanner.jsx';
 
 /**
  * /employee/customers/:id — the customer profile:
@@ -37,7 +38,13 @@ export default function EmployeeCustomerProfilePage() {
     setStatus('loading');
     try {
       const d = await employeeApi.customer(customerId);
-      setData(d);
+      setData({
+        ...d,
+        customer: d.customer || {},
+        memories: d.memories || [],
+        tickets: d.tickets || [],
+        conversations: d.conversations || [],
+      });
       setError(null);
       setStatus('success');
     } catch (err) {
@@ -72,9 +79,7 @@ export default function EmployeeCustomerProfilePage() {
       {status === 'loading' && <p className="text-sm text-slate-500">Loading profile…</p>}
 
       {status === 'error' && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          {error}
-        </div>
+        <ErrorBanner error={error} onRetry={load} />
       )}
 
       {status === 'success' && data && (
