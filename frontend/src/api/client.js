@@ -89,6 +89,7 @@ export const healthApi = {
 export const customersApi = {
   list: () => fetchJson('/customers'),
   get: (customerId) => fetchJson(`/customers/${customerId}`),
+  create: (payload) => postJson('/customers', payload, 15000),
 };
 
 /** Chat sidebar + conversation history. Always scoped by customerId. */

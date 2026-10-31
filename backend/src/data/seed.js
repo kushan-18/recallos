@@ -38,15 +38,31 @@ async function seed() {
   // ---------------------------------------------------------------------
   // 1. Clean up ONLY previous demo data (idempotent = safe to re-run)
   // ---------------------------------------------------------------------
+
+  // 1a. Remove any customers created via the "New customer" picker form
+  //     (isDemo: false) — demo:reset keeps only the seeded accounts.
+  const formCustomers = await Customer.find({ isDemo: false });
+  if (formCustomers.length > 0) {
+    const formIds = formCustomers.map((c) => c._id);
+    const formConvIds = await Conversation.find({ customerId: { $in: formIds } }).distinct('_id');
+    await Message.deleteMany({ conversationId: { $in: formConvIds } });
+    await Conversation.deleteMany({ customerId: { $in: formIds } });
+    await Memory.deleteMany({ customerId: { $in: formIds } });
+    await Ticket.deleteMany({ customerId: { $in: formIds } });
+    await Customer.deleteMany({ _id: { $in: formIds } });
+    console.log(`✓ removed ${formCustomers.length} form-created customer(s) and their data`);
+  }
+
+  // 1b. Remove previous seeded demo customers, then re-create them fresh.
   const demoEmails = ['alice.demo@fastnet.example', 'bob.demo@fastnet.example'];
   const oldDemoCustomers = await Customer.find({ email: { $in: demoEmails } });
   const oldDemoIds = oldDemoCustomers.map((c) => c._id);
 
   if (oldDemoIds.length > 0) {
+    // Delete messages BEFORE their conversations (order matters).
+    const oldConvIds = await Conversation.find({ customerId: { $in: oldDemoIds } }).distinct('_id');
+    await Message.deleteMany({ conversationId: { $in: oldConvIds } });
     await Conversation.deleteMany({ customerId: { $in: oldDemoIds } });
-    await Message.deleteMany({
-      conversationId: { $in: await Conversation.find({ customerId: { $in: oldDemoIds } }).distinct('_id') },
-    });
     await Memory.deleteMany({ customerId: { $in: oldDemoIds } });
     await Ticket.deleteMany({ customerId: { $in: oldDemoIds } });
   }

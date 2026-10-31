@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { listCustomers, getCustomer } from '../controllers/customer.controller.js';
+import { listCustomers, createCustomer, getCustomer } from '../controllers/customer.controller.js';
 
 const router = Router();
 
-// GET /api/customers          — demo customers for the picker
-// GET /api/customers/:id      — one customer's profile
+// GET  /api/customers     — everyone on the picker
+// POST /api/customers     — create a customer (name, email, plan)
+// GET  /api/customers/:id — one customer's profile
 router.get('/', listCustomers);
+router.post('/', createCustomer);
 router.get('/:id', getCustomer);
 
 export default router;

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { customersApi } from '../api/client.js';
 import ErrorBanner from '../components/ErrorBanner.jsx';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * The demo customer picker (the app's home page).
@@ -10,12 +12,22 @@ import ErrorBanner from '../components/ErrorBanner.jsx';
  * customer's id then travels in the URL of every page — which is exactly
  * what the backend uses to keep customers strictly separated.
  *
- * Only demo customers are ever offered (the API filters on isDemo).
+ * You can also create a new demo customer on the spot (zero memories,
+ * fresh chat). These accounts are removed by `npm run demo:reset`.
  */
 export default function CustomerSelectorPage() {
+  const navigate = useNavigate();
+
   const [customers, setCustomers] = useState([]);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
+
+  // --- new-customer form state ---
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formPlan, setFormPlan] = useState('Basic');
+  const [formError, setFormError] = useState(null);
+  const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -35,6 +47,34 @@ export default function CustomerSelectorPage() {
     load();
   }, [load]);
 
+  async function handleCreate(e) {
+    e.preventDefault();
+    setFormError(null);
+
+    // Client-side validation (the backend re-checks everything).
+    if (!formName.trim()) {
+      setFormError('Please enter a name.');
+      return;
+    }
+    if (!formEmail.trim() || !EMAIL_RE.test(formEmail.trim())) {
+      setFormError('Please enter a valid email address.');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const data = await customersApi.create({
+        name: formName.trim(),
+        email: formEmail.trim(),
+        plan: formPlan,
+      });
+      navigate(`/chat/${data.customer._id}`);
+    } catch (err) {
+      setFormError(err.message);
+      setCreating(false);
+    }
+  }
+
   return (
     <section className="mx-auto max-w-2xl space-y-8">
       <div className="text-center">
@@ -44,7 +84,7 @@ export default function CustomerSelectorPage() {
           Each customer's data is kept strictly separate.
         </p>
         <span className="mt-3 inline-block rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
-          DEMO DATA — two sample accounts
+          DEMO DATA — sample accounts, or create your own below
         </span>
       </div>
 
@@ -91,11 +131,69 @@ export default function CustomerSelectorPage() {
             </div>
           </Link>
         ))}
+
+        {/* ---------- new-customer form card ---------- */}
+        <form
+          onSubmit={handleCreate}
+          className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 p-5"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-800 text-lg">
+              ➕
+            </div>
+            <div>
+              <p className="font-medium text-slate-200">New customer</p>
+              <p className="text-xs text-slate-500">
+                Demo only — no real authentication
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            <input
+              type="text"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+              placeholder="Name"
+              disabled={creating}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-indigo-500/60"
+            />
+            <input
+              type="email"
+              value={formEmail}
+              onChange={(e) => setFormEmail(e.target.value)}
+              placeholder="Email"
+              disabled={creating}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-indigo-500/60"
+            />
+            <select
+              value={formPlan}
+              onChange={(e) => setFormPlan(e.target.value)}
+              disabled={creating}
+              className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-500/60"
+            >
+              <option value="Basic">Basic plan</option>
+              <option value="Premium">Premium plan</option>
+            </select>
+
+            {formError && (
+              <p className="text-xs text-red-400">⚠️ {formError}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={creating}
+              className="w-full rounded-lg border border-indigo-500/40 bg-indigo-500/10 px-3 py-2 text-sm font-medium text-indigo-300 transition hover:bg-indigo-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {creating ? 'Creating…' : 'Create & open chat →'}
+            </button>
+          </div>
+        </form>
       </div>
 
       {status === 'success' && customers.length === 0 && (
         <p className="text-center text-sm text-slate-400">
-          No demo customers found — run <code>npm run seed</code> in the backend folder.
+          No customers found — run <code>npm run seed</code> in the backend folder.
         </p>
       )}
     </section>
