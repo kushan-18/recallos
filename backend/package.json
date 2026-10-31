@@ -1,0 +1,30 @@
+{
+  "name": "recallos-backend",
+  "version": "0.1.0",
+  "description": "Backend API for the AI Customer Support chatbot",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/data/seed.js",
+    "verify": "node src/data/verify.js",
+    "embed": "node src/data/embed.js",
+    "index": "node src/data/vectorIndex.js",
+    "test:search": "node src/data/test-search.js",
+    "test:chat": "node src/data/test-chat.js",
+    "test:failover": "node src/data/test-failover.js",
+    "test:endpoints": "node src/data/test-endpoints.js",
+    "test:employee": "node src/data/test-employee.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "mongoose": "^9.11.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

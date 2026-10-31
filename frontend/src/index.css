@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+
+/* Tailwind v4: styles are configured right here in CSS.
+   The @import pulls in all of Tailwind's utilities (like bg-slate-950,
+   flex, text-center, etc.) which you can then use in your JSX. */

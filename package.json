@@ -1,0 +1,14 @@
+{
+  "name": "recallos",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RecallOS - an agentic memory layer for AI apps (MongoDB Agentic Memory track)",
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "dev": "concurrently -n backend,frontend -c yellow,cyan \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\""
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}
