@@ -183,6 +183,39 @@ Starting over for a demo? `npm run demo:reset` (in `backend/`) wipes the demo cu
 
 ---
 
+## Deployment
+
+### Backend → Render (root directory: `backend`)
+
+1. Create a new **Web Service** on [Render](https://render.com) connected to this repo.
+2. Set **Root Directory** to `backend`.
+3. Build command: `npm install` — Start command: `npm start` (already in `package.json`, runs `node src/server.js`).
+4. Add environment variables in the Render dashboard (never in code):
+   - `NODE_ENV=production`
+   - `MONGODB_URI` — your Atlas connection string
+   - `GEMINI_API_KEY` — your key (and `GEMINI_API_KEY_BACKUP` if you have a second)
+   - `CORS_ORIGIN` — comma-separated list, e.g. `http://localhost:5173,https://your-site.netlify.app`
+   - Model settings (`GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `EMBEDDING_DIM`) if different from defaults
+5. Render assigns a `PORT` automatically — the server reads it from the environment.
+
+### Frontend → Netlify (base directory: `frontend`)
+
+1. Create a new site on [Netlify](https://netlify.com) connected to this repo.
+2. Set **Base directory** to `recallos/frontend`.
+3. Build settings (also in `frontend/netlify.toml`):
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+4. Add environment variable in the Netlify dashboard:
+   - `VITE_API_BASE_URL` = `https://your-app.onrender.com/api` (your Render backend URL + `/api`)
+   - ⚠️ This is baked in at build time — change it and redeploy if the backend URL changes.
+5. SPA routing is handled by `frontend/public/_redirects` (copied to `dist/` on build) and `netlify.toml` — all routes fall back to `index.html`.
+
+### Post-deploy check
+
+Visit `https://your-app.onrender.com/api/health` — you should see `status: ok`, `database: connected`, and `retrieval: atlas-vector`.
+
+---
+
 ## Security notes (keys & data)
 
 - `.env.example` files contain **placeholders only** — real values belong in `.env`, which is listed in `.gitignore` (`recallos/.gitignore` and `backend/.gitignore`).
